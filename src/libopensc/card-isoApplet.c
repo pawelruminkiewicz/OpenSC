@@ -71,6 +71,13 @@ static struct sc_card_driver isoApplet_drv =
 	NULL, 0, NULL
 };
 
+static const struct sc_atr_table isoApplet_atrs[] = {
+	/* JCOP cards */
+	{ "3b:f8:13:00:00:81:31:fe:45:4a:43:4f:50:32:30:31:38:fd", NULL, "JCOP", SC_CARD_TYPE_ISOAPPLET_JCOP, 0, NULL },
+	/* Oberthut Cosmo v7 IAS ECC cards */
+	{ "3b:dd:18:00:81:31:fe:45:80:f9:a0:00:00:00:77:01:08:00:07:90:00:fe", NULL, "Oberthut Cosmo v7 IAS ECC", SC_CARD_TYPE_ISOAPPLET_OBERTHUR_COSMO_7_1, 0, NULL }
+};
+
 static struct isoapplet_supported_ec_curves {
 		struct sc_object_id oid;
 		size_t size;
@@ -186,6 +193,13 @@ isoApplet_match_card(sc_card_t *card)
 		       "Please update accordingly whenever possible.",
 		       ISOAPPLET_API_VERSION_MAJOR, ISOAPPLET_API_VERSION_MINOR, rbuf[0], rbuf[1]);
 	}
+
+	int i;
+	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
+
+	i = _sc_match_atr(card, isoApplet_atrs, &card->type);
+	if (i < 0)
+		return 0;		
 
 	return 1;
 }
