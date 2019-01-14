@@ -158,6 +158,14 @@ isoApplet_finish(sc_card_t *card)
 static int
 isoApplet_match_card(sc_card_t *card)
 {
+
+	int i;
+	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
+
+	i = _sc_match_atr(card, isoApplet_atrs, &card->type);
+	if (i < 0)
+		return 0;	
+
 	size_t rlen = SC_MAX_APDU_BUFFER_SIZE;
 	u8 rbuf[SC_MAX_APDU_BUFFER_SIZE];
 	int rv;
@@ -193,13 +201,6 @@ isoApplet_match_card(sc_card_t *card)
 		       "Please update accordingly whenever possible.",
 		       ISOAPPLET_API_VERSION_MAJOR, ISOAPPLET_API_VERSION_MINOR, rbuf[0], rbuf[1]);
 	}
-
-	int i;
-	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
-
-	i = _sc_match_atr(card, isoApplet_atrs, &card->type);
-	if (i < 0)
-		return 0;		
 
 	return 1;
 }
