@@ -1085,6 +1085,41 @@ isoApplet_ctl_import_key(sc_card_t *card, sc_cardctl_isoApplet_import_key_t *arg
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
+/*
+ * @brief Return card serial number
+ */
+static int
+isoApplet_ctl_get_serialnr(sc_card_t *card, sc_serial_number_t *serial)
+{
+	int r;
+	sc_apdu_t apdu;
+	u8  rbuf[SC_MAX_APDU_BUFFER_SIZE];
+	struct isoApplet_drv_data *drvdata = (struct isoApplet_drv_data *)card->drv_data;
+
+	LOG_FUNC_CALLED(card->ctx);
+	if (drvdata->isoapplet_version < 0x0007)
+	{
+		memset(serial, 0, sizeof(*serial));
+		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_IMPLEMENTED);
+	}
+	/* ISO7816 proprietary GET VALUE apdu */
+	sc_format_apdu(card, &apdu, SC_APDU_CASE_2_SHORT, 0x6C, 0x01, 0x00);
+	apdu.cla = 0x80;
+	apdu.resp = rbuf;
+	apdu.resplen = sizeof(rbuf);
+	apdu.le = SC_MAX_SERIALNR;
+	r = sc_transmit_apdu(card, &apdu);
+	SC_TEST_RET(card->ctx, SC_LOG_DEBUG_NORMAL, r,  "APDU transmit failed");
+	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
+	LOG_TEST_RET(card->ctx, r, "Card returned error");
+	/* cache serial number */
+	memcpy(card->serialnr.value, rbuf, apdu.resplen);
+	card->serialnr.len = apdu.resplen;
+	/* copy and return serial number */
+	memcpy(serial, &card->serialnr, sizeof(*serial));
+	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
+}
+
 static int
 isoApplet_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
 {
@@ -1104,6 +1139,10 @@ isoApplet_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
 	case SC_CARDCTL_ISOAPPLET_IMPORT_KEY:
 		r = isoApplet_ctl_import_key(card,
 		                             (sc_cardctl_isoApplet_import_key_t *) ptr);
+		break;
+	case SC_CARDCTL_GET_SERIALNR:
+		r = isoApplet_ctl_get_serialnr(card,
+		                             (sc_serial_number_t *) ptr);
 		break;
 	default:
 		r = SC_ERROR_NOT_SUPPORTED;
