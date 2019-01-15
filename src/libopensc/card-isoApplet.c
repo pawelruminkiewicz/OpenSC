@@ -1141,10 +1141,6 @@ isoApplet_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
 		r = isoApplet_ctl_import_key(card,
 		                             (sc_cardctl_isoApplet_import_key_t *) ptr);
 		break;
-	case SC_CARDCTL_GET_SERIALNR:
-		r = isoApplet_ctl_get_serialnr(card,
-		                             (sc_serial_number_t *) ptr);
-		break;
 	default:
 		r = SC_ERROR_NOT_SUPPORTED;
 	}
